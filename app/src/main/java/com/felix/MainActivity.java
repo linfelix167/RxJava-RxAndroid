@@ -5,11 +5,17 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import java.util.List;
+
 import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.Observer;
 import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
@@ -19,6 +25,9 @@ public class MainActivity extends AppCompatActivity {
 
     // ui
     private TextView textView;
+
+    // vars
+    private CompositeDisposable disposable = new CompositeDisposable();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSubscribe(Disposable d) {
                 Log.d(TAG, "onSubscribe: called");
+                disposable.add(d);
             }
 
             @Override
@@ -66,5 +76,44 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "onComplete: called");
             }
         });
+
+        final Task task = new Task("Walk the dog", false, 3);
+        final List<Task> tasks = DataSource.createTasksList();
+
+        // Operator
+        Observable<Integer> taskObservable = Observable
+                .range(0, 3)
+                .subscribeOn(Schedulers.io())
+                .repeat(3)
+                .observeOn(AndroidSchedulers.mainThread());
+
+        taskObservable.subscribe(new Observer<Integer>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(Integer integer) {
+                Log.d(TAG, "onNext: " + integer);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        disposable.clear();
     }
 }
